@@ -1,8 +1,10 @@
-
+#include<atmega32_timer.h>
+#include<avr/io.h>
+#include<util.h>
 
 void  timer0_init(TIMER_CB * timer_cb)
 {
-        if(timer_cb->mode == NORMAL)
+        if((timer_cb->mode) == NORMAL)
         {
                 CLRBIT(TCCR0,WGM00);
                 CLRBIT(TCCR0,WGM01);
