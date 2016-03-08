@@ -4,6 +4,7 @@
 #include<uart.h>
 #include<avr/interrupt.h>
 #include<avr/pgmspace.h>
+#include<avr/eeprom.h>
 #include<math.h>
 #include<string.h>
 #include <util.h>
@@ -237,7 +238,7 @@ uart_gets (char *s, uint8_t len)
 void
 uart_puts_pgm (PGM_P p)
 {
-  unsigned char *c;
+  unsigned char c;
   uint8_t i = 0;
   while ((c = pgm_read_byte (p + i)) != 0)
     {
@@ -246,15 +247,17 @@ uart_puts_pgm (PGM_P p)
     }
 }
 
+
 void
 process_cmds ()
 {
   char cmd[MAXSTRLEN];
-  uint8_t i = 0, data_len = 0;
+  uint8_t data_len = 0;
   char tmp[40];
-  char *handle = NULL, char_p;
+  char *handle = NULL, *char_p;
   uint16_t data_0 = adc_data[0];
   uint16_t data_1 = adc_data[1];
+  uint16_t data_2;
   float temp = ((data_0 / 1024.0) * 2.56) * 100;
   float pot = ((data_1 / 1024.0) * 2.56);
   snprintf (tmp, sizeof (tmp), "%.2f Celcius</p>", temp);
@@ -262,21 +265,21 @@ process_cmds ()
   snprintf (tmp, sizeof (tmp), "%.2f Volts</p>", pot);
   data_1 = strlen (tmp);
   snprintf (tmp, sizeof (tmp), "%s </p>", ip);
-  uint16_t data_2 = strlen (tmp);
+  data_2 = strlen (tmp);
 
-  uart_gets (cmd, MAXSTRLEN);     	//+IPD,0,278:GET / HTTP/1.0
+  uart_gets (cmd, MAXSTRLEN);	//+IPD,0,278:GET / HTTP/1.0
   if (!strncmp (cmd, "+IPD", 4))
     {
-      strtok (cmd, ",");   		//skip +IPD
-      handle = strtok (NULL, ",");   	//get the client handle
-      strtok (NULL, ":");		//skip data len
+      strtok (cmd, ",");	//skip +IPD
+      handle = strtok (NULL, ",");	//get the client handle
+      strtok (NULL, ":");	//skip data len
       char_p = strtok (NULL, " ");	//get the command name
-      if (!strncmp (char_p, "GET", 3))  //Match the command 
+      if (!strncmp (char_p, "GET", 3))	//Match the command 
 	{
-	  char_p = strtok (NULL, " ");  //get the command args 
-	  if (!strcmp (char_p, "/"))    //Serving index.html
+	  char_p = strtok (NULL, " ");	//get the command args 
+	  if (!strcmp (char_p, "/"))	//Serving index.html
 	    {
-		//Here you serve index.html
+	      //Here you serve index.html
 	      //flash_led(4); 
 	      data_len = (uint8_t) (strlen_P (web_page_title) +
 				    strlen_P (web_page_body1) +
@@ -309,22 +312,23 @@ process_cmds ()
 	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
 	      uart_puts (tmp);
 	      _delay_ms (500);
-	    }//end serving index.html
+	    }			//end serving index.html
 	  else
-	       { 
+	    {
 	      //Here you serve according to requested page
 	      //uptill here char_p contain starting of args but cant use strtok as it has reached HTTP
 	      //+IPD,0,278:GET /ap?id=abhi&passwd=1234 HTTP/1.0
-	      if (!strncmp (char_p, "/ap",3))
+	      if (!strncmp (char_p, "/ap", 3))
 		{
-		  strtok(char_p,"?");
-		  char_p = strtok(NULL,"="); 
+		  strtok (char_p, "?");
+		  char_p = strtok (NULL, "=");
 		  if (strcmp (char_p, "id"))
 		    {
-		       goto ERROR_EXIT;
+		      goto ERROR_EXIT;
 		    }
 		  char_p = strtok (NULL, "&");
-		  //store id to eeprom
+		  eeprom_write_block ((const void *) char_p, (void *) ssid,
+				      strlen (char_p));
 
 		  char_p = strtok (NULL, "=");
 		  if (strcmp (char_p, "passwd"))
@@ -333,17 +337,29 @@ process_cmds ()
 		    }
 		  char_p = strtok (NULL, "\0");
 		  //store id to eeprom
+		  eeprom_write_block ((const void *) char_p, (void *) passwd,
+				      strlen (char_p));
 
 
 		}
 
-	    } //End serving ssid and passwd request
-	}//End of matching GET 
-	else	
+	    }			//End serving ssid and passwd request
+	}			//End of matching GET 
+      else
 	{
-		//Here you process other custom commands
+	  //Here you process other custom commands
 	}
     }
+
+  return;
+ERROR_EXIT:
+
+  data_len = (uint8_t) (strlen_P (error_page_1));
+  snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
+  uart_puts_pgm (error_page_1);
+  _delay_ms (500);
+  snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
+  _delay_ms (500);
 
 }
 
@@ -371,6 +387,35 @@ get_ip_address (void)
   uart_flush ();
   return;
 
+}
+
+void
+join_AP_from_EEPROM (void)
+{
+  char buff[MAX_SSID_LEN];
+  uart_flush ();
+  eeprom_read_block ((void *) buff, (const void *) ssid, MAX_SSID_LEN);
+  uart_puts ("AT+CWJAP=\"");
+  uart_puts (buff);
+  uart_puts ("\",\"");
+  eeprom_read_block ((void *) buff, (const void *) passwd, MAX_SSID_LEN);
+  uart_puts (buff);
+  uart_puts ("\"\r\n");
+
+  while (!uart_available ());
+  while (uart_available ())
+    {
+      while (!uart_available ());
+      _delay_ms (100);		//let uart data flow in to buffer
+      uart_gets (buff, MAX_SSID_LEN);
+      if (!strcmp ("OK", buff))
+	{
+	  flash_led (5);
+	  break;
+	}
+      flash_led (3);
+      _delay_ms (2000);
+    }
 }
 
 int
@@ -408,6 +453,7 @@ main ()
 
   uart_puts ("AT+CWMODE=3\r\n");
   _delay_ms (500);
+
   uart_puts ("AT+CWJAP=\"Abhishek\",\"85128512\r\n");
   _delay_ms (500);
   //uart_puts("AT+CIFSR\r\n");
@@ -415,7 +461,7 @@ main ()
 //      uart_puts("AT+PING=\"192.168.0.1\"\r\n");
 //      _delay_ms(500);
   uart_flush ();
-  uart_puts ("AT+CWSAP=\"Safui\",\"kittycaddy\",11,2\r\n");
+  uart_puts ("AT+CWSAP=\"Safui\",\"12561256\",11,2\r\n");
   _delay_ms (500);
   uart_flush ();
   _delay_ms (500);
@@ -424,7 +470,7 @@ main ()
   uart_puts ("AT+CIPSERVER=1,80\r\n");
   uart_flush ();
   _delay_ms (2000);
-  get_ip_address ();
+  join_AP_from_EEPROM ();
   /*for(i=0; i<12; i++)
      {
      tone(notes[i]);
