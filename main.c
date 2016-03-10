@@ -264,19 +264,19 @@ process_cmds ()
   snprintf (tmp, sizeof (tmp), "%s </p>", ip);
   uint16_t data_2 = strlen (tmp);
 
-  uart_gets (cmd, MAXSTRLEN);     	//+IPD,0,278:GET / HTTP/1.0
+  uart_gets (cmd, MAXSTRLEN);	//+IPD,0,278:GET / HTTP/1.0
   if (!strncmp (cmd, "+IPD", 4))
     {
-      strtok (cmd, ",");   		//skip +IPD
-      handle = strtok (NULL, ",");   	//get the client handle
-      strtok (NULL, ":");		//skip data len
+      strtok (cmd, ",");	//skip +IPD
+      handle = strtok (NULL, ",");	//get the client handle
+      strtok (NULL, ":");	//skip data len
       char_p = strtok (NULL, " ");	//get the command name
-      if (!strncmp (char_p, "GET", 3))  //Match the command 
+      if (!strncmp (char_p, "GET", 3))	//Match the command 
 	{
-	  char_p = strtok (NULL, " ");  //get the command args 
-	  if (!strcmp (char_p, "/"))    //Serving index.html
+	  char_p = strtok (NULL, " ");	//get the command args 
+	  if (!strcmp (char_p, "/"))	//Serving index.html
 	    {
-		//Here you serve index.html
+	      //Here you serve index.html
 	      //flash_led(4); 
 	      data_len = (uint8_t) (strlen_P (web_page_title) +
 				    strlen_P (web_page_body1) +
@@ -309,19 +309,19 @@ process_cmds ()
 	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
 	      uart_puts (tmp);
 	      _delay_ms (500);
-	    }//end serving index.html
+	    }			//end serving index.html
 	  else
-	       { 
+	    {
 	      //Here you serve according to requested page
 	      //uptill here char_p contain starting of args but cant use strtok as it has reached HTTP
 	      //+IPD,0,278:GET /ap?id=abhi&passwd=1234 HTTP/1.0
-	      if (!strncmp (char_p, "/ap",3))
+	      if (!strncmp (char_p, "/ap", 3))
 		{
-		  strtok(char_p,"?");
-		  char_p = strtok(NULL,"="); 
+		  strtok (char_p, "?");
+		  char_p = strtok (NULL, "=");
 		  if (strcmp (char_p, "id"))
 		    {
-		       goto ERROR_EXIT;
+		      goto ERROR_EXIT;
 		    }
 		  char_p = strtok (NULL, "&");
 		  //store id to eeprom
@@ -337,11 +337,11 @@ process_cmds ()
 
 		}
 
-	    } //End serving ssid and passwd request
-	}//End of matching GET 
-	else	
+	    }			//End serving ssid and passwd request
+	}			//End of matching GET 
+      else
 	{
-		//Here you process other custom commands
+	  //Here you process other custom commands
 	}
     }
 
