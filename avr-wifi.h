@@ -21,6 +21,7 @@ extern const char web_page_body1[];
 extern const char web_page_body2[];
 extern const char web_page_body3[];
 extern const char web_page_body4[];
+extern const char web_page_body5[];
 extern const char web_page_end[];
 extern const char error_page_1[];
 #endif

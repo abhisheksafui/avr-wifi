@@ -6,6 +6,7 @@
 #include<avr/pgmspace.h>
 #include<avr/eeprom.h>
 #include<math.h>
+#include<stdio.h>
 #include<string.h>
 #include <util.h>
 #include<avr-wifi.h>
@@ -156,7 +157,7 @@ timer1_init ()
   TCCR1A = _BV (COM1B1) | _BV (WGM10) | _BV (WGM11);
   TCCR1B = _BV (WGM13) | _BV (WGM12);
   TCNT1 = 0;
-  OCR1A = ceil ((F_CPU / 8.0) / 16.35);
+  OCR1A = ceil ((F_CPU / 1024.0) / 16.35);
   OCR1B = 0.4 * OCR1A;
 //ceil((F_CPU/8.0)/262.0);
 
@@ -166,8 +167,7 @@ void
 start_timer1 (void)
 {
 
-  TCCR1B |= 2;
-
+  TCCR1B |= _BV(CS12) | _BV(CS10); //1024 PRE
 
 }
 
@@ -180,7 +180,7 @@ pause_timer1 (void)
 void
 tone (double n)
 {
-  uint16_t i = ceil ((F_CPU / 8.0) / n);
+  uint16_t i = ceil ((F_CPU /1024.0) / n);
   OCR1A = i;
   OCR1B = 65;
   start_timer1 ();
@@ -252,7 +252,7 @@ void
 process_cmds ()
 {
   char cmd[MAXSTRLEN];
-  uint8_t data_len = 0;
+  uint16_t data_len = 0;
   char tmp[40];
   char *handle = NULL, *char_p;
   uint16_t data_0 = adc_data[0];
@@ -281,20 +281,21 @@ process_cmds ()
 	    {
 	      //Here you serve index.html
 	      //flash_led(4); 
-	      data_len = (uint8_t) (strlen_P (web_page_title) +
+	      data_len =  (strlen_P (web_page_title) +
 				    strlen_P (web_page_body1) +
 				    strlen_P (web_page_body2) +
 				    strlen_P (web_page_body3) +
 				    strlen_P (web_page_body4) +
+				    strlen_P (web_page_body5) +
 				    data_0 + data_1 + data_2 +
 				    strlen_P (web_page_end));
-	      strtok (cmd, ",");
-	      handle = strtok (NULL, ",");
+	     // strtok (cmd, ",");
+	     // handle = strtok (NULL, ",");
 	      snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle,
 			data_len);
 	      uart_puts (tmp);
 	      /*wait for prompt */
-	      //while(uart_getc()!='>'); 
+	      while(uart_getc()!='>'); 
 	      uart_puts_pgm (web_page_title);
 	      uart_puts_pgm (web_page_body1);
 	      uart_puts_pgm (web_page_body2);
@@ -306,12 +307,14 @@ process_cmds ()
 	      uart_puts_pgm (web_page_body4);
 	      snprintf (tmp, sizeof (tmp), "%s </p>", ip);
 	      uart_puts (tmp);
+	      uart_puts_pgm (web_page_body5);
 	      uart_puts_pgm (web_page_end);
 
 	      _delay_ms (500);
 	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
 	      uart_puts (tmp);
 	      _delay_ms (500);
+		flash_led(3);
 	    }			//end serving index.html
 	  else
 	    {
@@ -328,7 +331,7 @@ process_cmds ()
 		    }
 		  char_p = strtok (NULL, "&");
 		  eeprom_write_block ((const void *) char_p, (void *) ssid,
-				      strlen (char_p));
+				      strlen (char_p)+1);
 
 		  char_p = strtok (NULL, "=");
 		  if (strcmp (char_p, "passwd"))
@@ -338,7 +341,7 @@ process_cmds ()
 		  char_p = strtok (NULL, "\0");
 		  //store id to eeprom
 		  eeprom_write_block ((const void *) char_p, (void *) passwd,
-				      strlen (char_p));
+				      strlen (char_p)+1);
 
 
 		}
@@ -356,6 +359,7 @@ ERROR_EXIT:
 
   data_len = (uint8_t) (strlen_P (error_page_1));
   snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
+  _delay_ms (100);
   uart_puts_pgm (error_page_1);
   _delay_ms (500);
   snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
@@ -421,7 +425,6 @@ join_AP_from_EEPROM (void)
 int
 main ()
 {
-  int i = 0;
   timer1_init ();		//FAST PWM with OCRA1 as top and OCR1B determining the DUTY CYCLE. OC1B pin as output
   // Timer 1 used for BUZZER TONE generation
   timer0_init ();
@@ -454,8 +457,8 @@ main ()
   uart_puts ("AT+CWMODE=3\r\n");
   _delay_ms (500);
 
-  uart_puts ("AT+CWJAP=\"Abhishek\",\"85128512\r\n");
-  _delay_ms (500);
+//  uart_puts ("AT+CWJAP=\"Abhishek\",\"85128512\r\n");
+//  _delay_ms (500);
   //uart_puts("AT+CIFSR\r\n");
   //_delay_ms(500);
 //      uart_puts("AT+PING=\"192.168.0.1\"\r\n");
@@ -469,8 +472,9 @@ main ()
   _delay_ms (500);
   uart_puts ("AT+CIPSERVER=1,80\r\n");
   uart_flush ();
-  _delay_ms (2000);
   join_AP_from_EEPROM ();
+  _delay_ms (2000);
+  get_ip_address ();
   /*for(i=0; i<12; i++)
      {
      tone(notes[i]);
