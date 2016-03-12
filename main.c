@@ -342,8 +342,19 @@ process_cmds ()
 		  //store id to eeprom
 		  eeprom_write_block ((const void *) char_p, (void *) passwd,
 				      strlen (char_p)+1);
-
-
+		
+		  
+		  join_AP_from_EEPROM ();
+		  _delay_ms (2000);
+		  get_ip_address ();
+		 
+    		  data_len  = strlen_P (ssid_update);
+		  snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
+		  _delay_ms (100);
+		  uart_puts_pgm (ssid_update);
+		  _delay_ms (500);
+		  snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
+		  _delay_ms (500); 
 		}
 
 	    }			//End serving ssid and passwd request
@@ -357,7 +368,7 @@ process_cmds ()
   return;
 ERROR_EXIT:
 
-  data_len = (uint8_t) (strlen_P (error_page_1));
+  data_len =  strlen_P (error_page_1);
   snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
   _delay_ms (100);
   uart_puts_pgm (error_page_1);

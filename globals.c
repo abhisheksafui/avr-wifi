@@ -18,4 +18,6 @@ const char web_page_body4[] PROGMEM = "<p>My Ip address is : ";
 const char web_page_body5[] PROGMEM = "<form action=\"ap\">SSID:<br><input type=\"text\" name=\"id\" value=\"Mickey\"> <br> Password:<br> <input type=\"text\" name=\"passwd\" value=\"Mouse\">  <br><br>  <input type=\"submit\" value=\"Submit\"></form>";
 const char web_page_end[] PROGMEM = "</body></html>";
 
+
+const char ssid_update[] PROGMEM = "<html><head><title>WIFI Home Page - New SSID password set.</title></head><body><h1>SSID PASSWORD UPDATED</h1><p>Connection will be down. Please join AP \"Safui\" and visit page 192.168.4.1 to know updated ip address</p></body></html>"  
 const char error_page_1[] PROGMEM = "<html><head><title>WIFI Home Page - ERROR</title></head><body><h1>Ooop's Something bad has happened</h1></body></html>";

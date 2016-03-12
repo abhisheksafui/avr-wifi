@@ -24,4 +24,5 @@ extern const char web_page_body4[];
 extern const char web_page_body5[];
 extern const char web_page_end[];
 extern const char error_page_1[];
+extern const char ssid_update[];
 #endif
