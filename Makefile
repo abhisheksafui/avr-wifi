@@ -1,5 +1,5 @@
 PRG            = main.c
-OBJ            = main.o uart.o globals.o 
+OBJ            = main.o uart.o globals.o led_matrix.o 74595_shift.o 
 #MCU_TARGET     = at90s2313
 #MCU_TARGET     = at90s2333
 #MCU_TARGET     = at90s4414

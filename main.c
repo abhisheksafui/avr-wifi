@@ -10,6 +10,8 @@
 #include<string.h>
 #include <util.h>
 #include<avr-wifi.h>
+#include<led_matrix.h>
+#include<font.h>
 
 
 
@@ -145,8 +147,39 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
 	  sel_channel = 0;
 	}
       start_adc_conversion (channel);
-      status_led_update ();
+      //status_led_update ();
     }
+
+
+  if (scroll < 8)
+    {
+      display_rows[scanned_row] =
+	(display_rows[scanned_row] << 1) |
+	(pgm_read_byte (&(font_5x7_col[message[i]][scanned_row])) >>
+	 col_count);
+      scroll++;
+    }
+
+  scan_row (display_rows[scanned_row], &latch);	//every timer overflow scan a row                   
+  if (count == 100)
+    {
+      //every 1 sec mark a flag to indicate updation of display_row data     
+      count = 0;
+      scroll = 0;
+      col_count--;
+      if (col_count == 1)
+	{
+	  i = (i + 1) % len;
+	  col_count = 7;
+	}
+      // TOGGLEBIT(PORTC,PC6);        
+      // TOGGLEBIT(PORTC,PC7);        
+    }
+  else
+    {
+      count += 1;
+    }
+
 }
 
 void
@@ -167,7 +200,7 @@ void
 start_timer1 (void)
 {
 
-  TCCR1B |= _BV(CS12) | _BV(CS10); //1024 PRE
+  TCCR1B |= _BV (CS12) | _BV (CS10);	//1024 PRE
 
 }
 
@@ -180,7 +213,7 @@ pause_timer1 (void)
 void
 tone (double n)
 {
-  uint16_t i = ceil ((F_CPU /1024.0) / n);
+  uint16_t i = ceil ((F_CPU / 1024.0) / n);
   OCR1A = i;
   OCR1B = 65;
   start_timer1 ();
@@ -281,21 +314,20 @@ process_cmds ()
 	    {
 	      //Here you serve index.html
 	      //flash_led(4); 
-	      data_len =  (strlen_P (web_page_title) +
-				    strlen_P (web_page_body1) +
-				    strlen_P (web_page_body2) +
-				    strlen_P (web_page_body3) +
-				    strlen_P (web_page_body4) +
-				    strlen_P (web_page_body5) +
-				    data_0 + data_1 + data_2 +
-				    strlen_P (web_page_end));
-	     // strtok (cmd, ",");
-	     // handle = strtok (NULL, ",");
+	      data_len = (strlen_P (web_page_title) +
+			  strlen_P (web_page_body1) +
+			  strlen_P (web_page_body2) +
+			  strlen_P (web_page_body3) +
+			  strlen_P (web_page_body4) +
+			  strlen_P (web_page_body5) +
+			  data_0 + data_1 + data_2 + strlen_P (web_page_end));
+	      // strtok (cmd, ",");
+	      // handle = strtok (NULL, ",");
 	      snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle,
 			data_len);
 	      uart_puts (tmp);
 	      /*wait for prompt */
-	      while(uart_getc()!='>'); 
+	      while (uart_getc () != '>');
 	      uart_puts_pgm (web_page_title);
 	      uart_puts_pgm (web_page_body1);
 	      uart_puts_pgm (web_page_body2);
@@ -314,7 +346,7 @@ process_cmds ()
 	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
 	      uart_puts (tmp);
 	      _delay_ms (500);
-		flash_led(3);
+	      flash_led (3);
 	    }			//end serving index.html
 	  else
 	    {
@@ -331,7 +363,7 @@ process_cmds ()
 		    }
 		  char_p = strtok (NULL, "&");
 		  eeprom_write_block ((const void *) char_p, (void *) ssid,
-				      strlen (char_p)+1);
+				      strlen (char_p) + 1);
 
 		  char_p = strtok (NULL, "=");
 		  if (strcmp (char_p, "passwd"))
@@ -341,20 +373,21 @@ process_cmds ()
 		  char_p = strtok (NULL, "\0");
 		  //store id to eeprom
 		  eeprom_write_block ((const void *) char_p, (void *) passwd,
-				      strlen (char_p)+1);
-		
-		  
+				      strlen (char_p) + 1);
+
+
 		  join_AP_from_EEPROM ();
 		  _delay_ms (2000);
 		  get_ip_address ();
-		 
-    		  data_len  = strlen_P (ssid_update);
-		  snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
+
+		  data_len = strlen_P (ssid_update);
+		  snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle,
+			    data_len);
 		  _delay_ms (100);
 		  uart_puts_pgm (ssid_update);
 		  _delay_ms (500);
 		  snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
-		  _delay_ms (500); 
+		  _delay_ms (500);
 		}
 
 	    }			//End serving ssid and passwd request
@@ -368,7 +401,7 @@ process_cmds ()
   return;
 ERROR_EXIT:
 
-  data_len =  strlen_P (error_page_1);
+  data_len = strlen_P (error_page_1);
   snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
   _delay_ms (100);
   uart_puts_pgm (error_page_1);
@@ -508,6 +541,7 @@ main ()
 	    }
 	  start_timer0 ();
 	}
+	status_led_update();
     }
 }
 

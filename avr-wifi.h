@@ -14,6 +14,7 @@ extern char passwd[MAX_SSID_LEN];
 extern char ip[32];
 extern volatile uint16_t adc_data[2];
 extern volatile uint8_t channel;
+extern volatile uint8_t count;
 extern const float notes[12];
 
 extern const char web_page_title[];
@@ -25,4 +26,8 @@ extern const char web_page_body5[];
 extern const char web_page_end[];
 extern const char error_page_1[];
 extern const char ssid_update[];
+
+
+extern void join_AP_from_EEPROM(void);
+void get_ip_address (void);
 #endif
