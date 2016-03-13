@@ -16,14 +16,14 @@
 
 
 
-const char *page[] = {
+/*const char *page[] = {
   web_page_title,
   web_page_body1,
   web_page_body2,
   web_page_body3,
   web_page_end
 };
-
+*/
 void
 sleep (int millisec)
 {
@@ -104,8 +104,8 @@ timer0_init (void)
 {
 /*CTC mode for generating interrupt every X us*/
   TCCR0 = _BV (WGM01);
-#define X 10
-#define PRE 8.0
+#define X 1000
+#define PRE 64.0
   OCR0 = (X / 1000000.0) * (F_CPU / PRE);
   //OCR0 = 10;
   TCNT0 = 0;
@@ -117,24 +117,23 @@ timer0_init (void)
 void
 start_timer0 (void)
 {
-  //TCCR0 |= _BV(CS00) | _BV(CS02);
-  TCCR0 |= _BV (CS01);
+  TCCR0 |= _BV(CS00) | _BV(CS01); // PRE 64
+  //TCCR0 |= _BV (CS01);         //8
 
 }
 
 void
 stop_timer0 (void)
 {
-  //TCCR0 &= ~(_BV(CS00) | _BV(CS02));
-  TCCR0 &= ~_BV (CS01);
+  TCCR0 &= ~(_BV(CS00) | _BV(CS01)); //stop PRE 64
+  //TCCR0 &= ~_BV (CS01);
 }
 
 volatile uint8_t sel_channel = 0;
 ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
 {
-
 #define Y 500			//event every Y ms
-  if (timer_int1++ == 50000)
+  if (timer_int1++ == 500)
     {
       timer_int1 = 0;
       //event function
@@ -147,10 +146,33 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
 	  sel_channel = 0;
 	}
       start_adc_conversion (channel);
-      //status_led_update ();
+      status_led_update ();
     }
 
+    if(count % 2 == 1 )
+    	refresh_matrix_row = 1; 
 
+    if(count == 200)
+    {
+	//indicate that its time to scroll
+	scroll = 0;
+	//restart scroll interval 
+	count = 0;
+	 col_count--;
+                                if(col_count == 1)
+                                {
+                                   //When I have completed scroll of one character I should start next character
+                                   i = (i+1)%len;
+
+                                   col_count = 7;
+                                }
+
+		
+    }//end if count == 100
+    else
+	count++;
+
+#if 0
   if (scroll < 8)
     {
       display_rows[scanned_row] =
@@ -160,7 +182,7 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
       scroll++;
     }
 
-  scan_row (display_rows[scanned_row], &latch);	//every timer overflow scan a row                   
+  //scan_row (display_rows[scanned_row], &latch);	//every timer overflow scan a row                   
   if (count == 100)
     {
       //every 1 sec mark a flag to indicate updation of display_row data     
@@ -179,6 +201,7 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
     {
       count += 1;
     }
+#endif
 
 }
 
@@ -346,7 +369,7 @@ process_cmds ()
 	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
 	      uart_puts (tmp);
 	      _delay_ms (500);
-	      flash_led (3);
+	      //flash_led (3);
 	    }			//end serving index.html
 	  else
 	    {
@@ -473,6 +496,11 @@ main ()
   // Timer 1 used for BUZZER TONE generation
   timer0_init ();
   //start_timer0();
+  DDRB=0xFF;
+  PORTB=0x00;
+  DDRD=_BV(PD7)|_BV(PD6)|_BV(PD5);
+  PORTD=0x00;
+
   adc_init ();
   uart_init (UART_BAUD_SELECT_DOUBLE_SPEED (115200, F_CPU));
   setup_leds ();
@@ -526,6 +554,8 @@ main ()
 
      }            
      pause_timer1(); */
+  snprintf(message,sizeof(message),"abhishek");
+  len = 8;
   start_timer0 ();
   while (1)
     {
@@ -541,7 +571,23 @@ main ()
 	    }
 	  start_timer0 ();
 	}
-	status_led_update();
+	//status_led_update();
+#if 1
+	if(refresh_matrix_row)
+	{
+	//	flash_led(2);
+  		if (scroll < 8) // interrupt counts interval to start scroll by setting scroll =0 at every 200ms
+    		{
+			//display buffer is updated per row before displaying/refreshing it
+      			display_rows[scanned_row] = (display_rows[scanned_row] << 1) |
+        						(pgm_read_byte (&(font_5x7_col[message[i]][scanned_row])) >>
+         						col_count);
+				scroll++;
+   		}
+  		scan_row (display_rows[scanned_row], &latch);       //every 2ms          
+		refresh_matrix_row = 0; 
+	}
+#endif
     }
 }
 

@@ -3,6 +3,7 @@
 
 #include<utilmacro.h>
 #include<avr/io.h>
+#include<util/delay_basic.h>
 
 #define CLK_DATA(LATCH)  do{\
 				SETBIT(*(LATCH->port),(LATCH->pin_c));\
@@ -11,7 +12,7 @@
 			  }while(0)
 #define LATCH_DATA(LATCH) do{\
                                 SETBIT(*(LATCH->port),LATCH->pin_l);\
-                                _delay_us(1);\
+				_delay_us(1);\
                                 CLRBIT(*(LATCH->port),LATCH->pin_l);\
                           }while(0) 
 

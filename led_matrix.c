@@ -1,6 +1,6 @@
 #include<led_matrix.h>
 #include<util/delay.h>
-
+#include<stdlib.h>
 volatile uint8_t scroll = 8;
 volatile uint8_t count = 0;
 volatile uint16_t  display_rows[MATRIX_ROW_COUNT] = {0};
@@ -8,6 +8,7 @@ volatile uint8_t len;
 volatile uint8_t col_count = 7;
 volatile uint8_t i =  0;
 volatile uint8_t scanned_row=0;
+volatile uint8_t refresh_matrix_row=0;
 volatile char message[MAX_MESSAGE_LEN];
 //volatile uint8_t *character;
 SHIFT_595_CB latch = {

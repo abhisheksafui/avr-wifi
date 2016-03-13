@@ -16,6 +16,7 @@ extern volatile uint8_t col_count;
 extern volatile uint8_t scroll;
 extern volatile uint8_t i;
 extern volatile uint8_t scanned_row;
+volatile uint8_t refresh_matrix_row;
 extern SHIFT_595_CB latch; 
 extern volatile char message[MAX_MESSAGE_LEN];
 
