@@ -10,6 +10,7 @@
 #include<string.h>
 #include <util.h>
 #include<avr-wifi.h>
+#include<web_server.h>
 #include<led_matrix.h>
 #include<font.h>
 
@@ -24,6 +25,13 @@
   web_page_end
 };
 */
+
+/*void update_message_buffer(char *message)
+{
+	eeprom_read_blo
+
+
+}*/
 void
 sleep (int millisec)
 {
@@ -117,7 +125,7 @@ timer0_init (void)
 void
 start_timer0 (void)
 {
-  TCCR0 |= _BV(CS00) | _BV(CS01); // PRE 64
+  TCCR0 |= _BV (CS00) | _BV (CS01);	// PRE 64
   //TCCR0 |= _BV (CS01);         //8
 
 }
@@ -125,7 +133,7 @@ start_timer0 (void)
 void
 stop_timer0 (void)
 {
-  TCCR0 &= ~(_BV(CS00) | _BV(CS01)); //stop PRE 64
+  TCCR0 &= ~(_BV (CS00) | _BV (CS01));	//stop PRE 64
   //TCCR0 &= ~_BV (CS01);
 }
 
@@ -149,28 +157,28 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
       status_led_update ();
     }
 
-    if(count % 2 == 1 )
-    	refresh_matrix_row = 1; 
+  if (count % 2 == 1)
+    refresh_matrix_row = 1;
 
-    if(count == 200)
+  if (count == 200)
     {
-	//indicate that its time to scroll
-	scroll = 0;
-	//restart scroll interval 
-	count = 0;
-	 col_count--;
-                                if(col_count == 1)
-                                {
-                                   //When I have completed scroll of one character I should start next character
-                                   i = (i+1)%len;
+      //indicate that its time to scroll
+      scroll = 0;
+      //restart scroll interval 
+      count = 0;
+      col_count--;
+      if (col_count == 1)
+	{
+	  //When I have completed scroll of one character I should start next character
+	  i = (i + 1) % len;
 
-                                   col_count = 7;
-                                }
+	  col_count = 7;
+	}
 
-		
-    }//end if count == 100
-    else
-	count++;
+
+    }				//end if count == 100
+  else
+    count++;
 
 #if 0
   if (scroll < 8)
@@ -182,7 +190,7 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
       scroll++;
     }
 
-  //scan_row (display_rows[scanned_row], &latch);	//every timer overflow scan a row                   
+  //scan_row (display_rows[scanned_row], &latch);       //every timer overflow scan a row                   
   if (count == 100)
     {
       //every 1 sec mark a flag to indicate updation of display_row data     
@@ -371,53 +379,88 @@ process_cmds ()
 	      _delay_ms (500);
 	      //flash_led (3);
 	    }			//end serving index.html
-	  else
+	  else if (!strncmp (char_p, "/ap", 3))
+
 	    {
 	      //Here you serve according to requested page
 	      //uptill here char_p contain starting of args but cant use strtok as it has reached HTTP
 	      //+IPD,0,278:GET /ap?id=abhi&passwd=1234 HTTP/1.0
-	      if (!strncmp (char_p, "/ap", 3))
+
+	      strtok (char_p, "?");
+	      char_p = strtok (NULL, "=");
+	      if (strcmp (char_p, "id"))
 		{
-		  strtok (char_p, "?");
-		  char_p = strtok (NULL, "=");
-		  if (strcmp (char_p, "id"))
-		    {
-		      goto ERROR_EXIT;
-		    }
-		  char_p = strtok (NULL, "&");
-		  eeprom_write_block ((const void *) char_p, (void *) ssid,
-				      strlen (char_p) + 1);
-
-		  char_p = strtok (NULL, "=");
-		  if (strcmp (char_p, "passwd"))
-		    {
-		      goto ERROR_EXIT;
-		    }
-		  char_p = strtok (NULL, "\0");
-		  //store id to eeprom
-		  eeprom_write_block ((const void *) char_p, (void *) passwd,
-				      strlen (char_p) + 1);
-
-
-		  join_AP_from_EEPROM ();
-		  _delay_ms (2000);
-		  get_ip_address ();
-
-		  data_len = strlen_P (ssid_update);
-		  snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle,
-			    data_len);
-		  _delay_ms (100);
-		  uart_puts_pgm (ssid_update);
-		  _delay_ms (500);
-		  snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
-		  _delay_ms (500);
+		  goto ERROR_EXIT;
 		}
+	      char_p = strtok (NULL, "&");
+	      eeprom_write_block ((const void *) char_p, (void *) ssid,
+				  strlen (char_p) + 1);
 
+	      char_p = strtok (NULL, "=");
+	      if (strcmp (char_p, "passwd"))
+		{
+		  goto ERROR_EXIT;
+		}
+	      char_p = strtok (NULL, "\0");
+	      //store id to eeprom
+	      eeprom_write_block ((const void *) char_p, (void *) passwd,
+				  strlen (char_p) + 1);
+
+
+	      join_AP_from_EEPROM ();
+	      _delay_ms (2000);
+	      get_ip_address ();
+
+	      data_len = strlen_P (ssid_update);
+	      snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle,
+			data_len);
+	      _delay_ms (100);
+	      uart_puts_pgm (ssid_update);
+	      _delay_ms (500);
+	      snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
+	      _delay_ms (500);
 	    }			//End serving ssid and passwd request
+
+	  else if (!strncmp (char_p, "/str", 4))
+	    {
+	      strtok (char_p, "?");
+	      char_p = strtok (NULL, "=");
+	      if (strcmp (char_p, "message"))
+		{
+		  goto ERROR_EXIT;
+		}
+	      char_p = strtok (NULL, "\0");
+	      if (strlen (char_p) >= MAX_MESSAGE_LEN)
+		{
+		  goto ERROR_EXIT;
+		}
+	      eeprom_update_block ((const char *) char_p,
+				   (void *) message_bak, strlen (char_p) + 1);
+	      eeprom_read_block ((void *) message,
+				 (const void *) message_bak, MAX_MESSAGE_LEN);
+
+	      //start over 
+	      len = strlen (char_p);
+	      scroll = 8;
+	      count = 0;
+	      col_count = 7;
+	      i = 0;
+	      scanned_row = 0;
+	      refresh_matrix_row = 0;
+
+	      serve_static_html ((const char *) string_update,
+				 (const char *) handle, tmp, sizeof (tmp));
+	    }			//End String update	
+	    else
+	    {
+		  goto ERROR_EXIT;
+
+	    }
+
 	}			//End of matching GET 
       else
 	{
-	  //Here you process other custom commands
+	  goto ERROR_EXIT;
 	}
     }
 
@@ -426,10 +469,12 @@ ERROR_EXIT:
 
   data_len = strlen_P (error_page_1);
   snprintf (tmp, sizeof (tmp), "AT+CIPSEND=%s,%d\r\n", handle, data_len);
+  uart_puts(tmp);
   _delay_ms (100);
   uart_puts_pgm (error_page_1);
   _delay_ms (500);
   snprintf (tmp, sizeof (tmp), "AT+CIPCLOSE=%s\r\n", handle);
+  uart_puts(tmp);
   _delay_ms (500);
 
 }
@@ -496,10 +541,10 @@ main ()
   // Timer 1 used for BUZZER TONE generation
   timer0_init ();
   //start_timer0();
-  DDRB=0xFF;
-  PORTB=0x00;
-  DDRD=_BV(PD7)|_BV(PD6)|_BV(PD5);
-  PORTD=0x00;
+  DDRB = 0xFF;
+  PORTB = 0x00;
+  DDRD = _BV (PD7) | _BV (PD6) | _BV (PD5);
+  PORTD = 0x00;
 
   adc_init ();
   uart_init (UART_BAUD_SELECT_DOUBLE_SPEED (115200, F_CPU));
@@ -554,8 +599,11 @@ main ()
 
      }            
      pause_timer1(); */
-  snprintf(message,sizeof(message),"abhishek");
-  len = 8;
+  //snprintf (message, sizeof (message), "abhishek");
+  //len = 8;
+	eeprom_read_block ((void *) message,
+				 (const void *) message_bak, MAX_MESSAGE_LEN);
+	len = strlen(message);
   start_timer0 ();
   while (1)
     {
@@ -571,21 +619,21 @@ main ()
 	    }
 	  start_timer0 ();
 	}
-	//status_led_update();
+      //status_led_update();
 #if 1
-	if(refresh_matrix_row)
+      if (refresh_matrix_row)
 	{
-	//	flash_led(2);
-  		if (scroll < 8) // interrupt counts interval to start scroll by setting scroll =0 at every 200ms
-    		{
-			//display buffer is updated per row before displaying/refreshing it
-      			display_rows[scanned_row] = (display_rows[scanned_row] << 1) |
-        						(pgm_read_byte (&(font_5x7_col[message[i]][scanned_row])) >>
-         						col_count);
-				scroll++;
-   		}
-  		scan_row (display_rows[scanned_row], &latch);       //every 2ms          
-		refresh_matrix_row = 0; 
+	  //      flash_led(2);
+	  if (scroll < 8)	// interrupt counts interval to start scroll by setting scroll =0 at every 200ms
+	    {
+	      //display buffer is updated per row before displaying/refreshing it
+	      display_rows[scanned_row] = (display_rows[scanned_row] << 1) |
+		(pgm_read_byte (&(font_5x7_col[message[i]][scanned_row])) >>
+		 col_count);
+	      scroll++;
+	    }
+	  scan_row (display_rows[scanned_row], &latch);	//every 2ms          
+	  refresh_matrix_row = 0;
 	}
 #endif
     }

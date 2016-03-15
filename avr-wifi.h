@@ -26,8 +26,10 @@ extern const char web_page_body5[];
 extern const char web_page_end[];
 extern const char error_page_1[];
 extern const char ssid_update[];
+extern const char string_update[];
 
 
 extern void join_AP_from_EEPROM(void);
 void get_ip_address (void);
+void uart_puts_pgm(PGM_P);
 #endif

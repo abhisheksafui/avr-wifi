@@ -4,7 +4,7 @@
 #include<74595_shift.h>
 
 #define MATRIX_ROW_COUNT 8
-#define MAX_MESSAGE_LEN 30
+#define MAX_MESSAGE_LEN 60
 #define ROW_SCAN_PORT	PORTB
 extern volatile uint8_t *character;
 extern volatile uint8_t scanned_row;
@@ -19,6 +19,7 @@ extern volatile uint8_t scanned_row;
 volatile uint8_t refresh_matrix_row;
 extern SHIFT_595_CB latch; 
 extern volatile char message[MAX_MESSAGE_LEN];
+extern char message_bak[MAX_MESSAGE_LEN];
 
 void scan_row(uint16_t byte,SHIFT_595_CB *latch);
 
