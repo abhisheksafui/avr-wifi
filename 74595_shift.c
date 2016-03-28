@@ -21,7 +21,7 @@
 		*(latch->port) &= ~(1<<(latch->pin_c));
         }
 }*/
-void shift_data(uint16_t data,uint8_t len,SHIFT_595_CB  *latch)
+void shift_data(uint32_t data,uint8_t len,SHIFT_595_CB  *latch)
 {
 
         uint8_t  i=0;

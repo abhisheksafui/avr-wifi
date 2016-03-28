@@ -28,5 +28,5 @@ typedef struct shift_595_cb {
 
 
 //inline void shift_byte(uint8_t data, SHIFT_595_CB *latch);
-inline void shift_data(uint16_t data,uint8_t len, SHIFT_595_CB *latch);
+inline void shift_data(uint32_t data,uint8_t len, SHIFT_595_CB *latch);
 #endif

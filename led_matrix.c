@@ -6,7 +6,7 @@
 volatile uint8_t scroll_time = 100;
 volatile uint8_t scroll = 8;
 volatile uint16_t count = 0;
-volatile uint16_t  display_rows[MATRIX_ROW_COUNT] = {0};
+volatile uint32_t  display_rows[MATRIX_ROW_COUNT] = {0};
 volatile uint8_t len;
 volatile uint8_t col_count = 7;
 volatile uint8_t i =  0;
@@ -25,10 +25,10 @@ SHIFT_595_CB latch = {
 };
 
 
-void scan_row(uint16_t data,SHIFT_595_CB *latch)
+void scan_row(uint32_t data,SHIFT_595_CB *latch)
 {
         ROW_SCAN_PORT = 0;
-        shift_data(data,16,latch);
+        shift_data(data,32,latch);
         LATCH_DATA(latch);
         ROW_SCAN_PORT = (1<<(7-scanned_row));
         scanned_row = (scanned_row+1)%8;

@@ -452,7 +452,7 @@ process_cmds ()
 	      i = 0;
 	      scanned_row = 0;
 	      refresh_matrix_row = 0;
-	      memset((void *)display_rows,0,MATRIX_ROW_COUNT*2);
+	      //memset((void *)display_rows,0,MATRIX_ROW_COUNT*4);
  
 	      serve_static_html ((const char *) string_update,
 				 (const char *) handle, tmp, sizeof (tmp));
