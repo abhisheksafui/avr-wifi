@@ -7,7 +7,6 @@ char ip[32];
 volatile uint16_t adc_data[2];
 volatile uint8_t channel;
 const float notes[12] PROGMEM = { 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.0, 415.30, 440.0, 466.16, 493.88};
-volatile uint8_t count;
 
 
 

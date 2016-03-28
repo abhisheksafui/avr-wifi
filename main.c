@@ -13,7 +13,10 @@
 #include<web_server.h>
 #include<led_matrix.h>
 #include<font.h>
+#include<string.h>
 
+
+#define UPDATE_SCROLL_TIME(s) ({ s = (adc_data[1]/1024.0 *100) + 5; })
 
 
 
@@ -160,7 +163,7 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
   if (count % 2 == 1)
     refresh_matrix_row = 1;
 
-  if (count == 200)
+  if (count == scroll_time*5)
     {
       //indicate that its time to scroll
       scroll = 0;
@@ -174,8 +177,6 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
 
 	  col_count = 7;
 	}
-
-
     }				//end if count == 100
   else
     count++;
@@ -324,6 +325,7 @@ process_cmds ()
   uint16_t data_2;
   float temp = ((data_0 / 1024.0) * 2.56) * 100;
   float pot = ((data_1 / 1024.0) * 2.56);
+  
   snprintf (tmp, sizeof (tmp), "%.2f Celcius</p>", temp);
   data_0 = strlen (tmp);
   snprintf (tmp, sizeof (tmp), "%.2f Volts</p>", pot);
@@ -429,25 +431,29 @@ process_cmds ()
 		{
 		  goto ERROR_EXIT;
 		}
-	      char_p = strtok (NULL, "\0");
-	      if (strlen (char_p) >= MAX_MESSAGE_LEN)
+	      char_p = strtok (NULL, " ");
+	      data_len = urlDecode(char_p,tmp);
+	      
+	      if (data_len >= MAX_MESSAGE_LEN)
 		{
 		  goto ERROR_EXIT;
 		}
-	      eeprom_update_block ((const char *) char_p,
-				   (void *) message_bak, strlen (char_p) + 1);
+
+	      eeprom_update_block ((const char *) tmp,
+				   (void *) message_bak, strlen (tmp) + 1);
 	      eeprom_read_block ((void *) message,
 				 (const void *) message_bak, MAX_MESSAGE_LEN);
 
 	      //start over 
-	      len = strlen (char_p);
+	      len = strlen (tmp);
 	      scroll = 8;
 	      count = 0;
 	      col_count = 7;
 	      i = 0;
 	      scanned_row = 0;
 	      refresh_matrix_row = 0;
-
+	      memset((void *)display_rows,0,MATRIX_ROW_COUNT*2);
+ 
 	      serve_static_html ((const char *) string_update,
 				 (const char *) handle, tmp, sizeof (tmp));
 	    }			//End String update	
@@ -627,6 +633,7 @@ main ()
 	  if (scroll < 8)	// interrupt counts interval to start scroll by setting scroll =0 at every 200ms
 	    {
 	      //display buffer is updated per row before displaying/refreshing it
+	      UPDATE_SCROLL_TIME(scroll_time);
 	      display_rows[scanned_row] = (display_rows[scanned_row] << 1) |
 		(pgm_read_byte (&(font_5x7_col[message[i]][scanned_row])) >>
 		 col_count);

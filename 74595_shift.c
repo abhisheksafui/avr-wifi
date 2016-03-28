@@ -37,7 +37,7 @@ void shift_data(uint16_t data,uint8_t len,SHIFT_595_CB  *latch)
 			*(latch->port) &= ~(1<<(latch->pin_d));
                 }
 		*(latch->port) |= (1<<(latch->pin_c));
-		_delay_us(1);		
+		_delay_loop_1(1);		
 		//NOP();
 		*(latch->port) &= ~(1<<(latch->pin_c));
         }

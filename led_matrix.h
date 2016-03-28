@@ -4,12 +4,13 @@
 #include<74595_shift.h>
 
 #define MATRIX_ROW_COUNT 8
-#define MAX_MESSAGE_LEN 60
+#define MAX_MESSAGE_LEN 40
 #define ROW_SCAN_PORT	PORTB
-extern volatile uint8_t *character;
+extern volatile uint8_t scroll_time;
+//extern volatile uint8_t *character;
 extern volatile uint8_t scanned_row;
 extern volatile uint8_t scroll;
-extern volatile uint8_t count;
+extern volatile uint16_t count;
 extern volatile uint16_t  display_rows[MATRIX_ROW_COUNT];
 extern volatile uint8_t len;
 extern volatile uint8_t col_count;

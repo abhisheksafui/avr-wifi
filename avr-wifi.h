@@ -14,7 +14,7 @@ extern char passwd[MAX_SSID_LEN];
 extern char ip[32];
 extern volatile uint16_t adc_data[2];
 extern volatile uint8_t channel;
-extern volatile uint8_t count;
+extern volatile uint16_t count;
 extern const float notes[12];
 
 extern const char web_page_title[];

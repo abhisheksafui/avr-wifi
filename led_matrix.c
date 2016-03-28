@@ -2,8 +2,10 @@
 #include<util/delay.h>
 #include<avr/eeprom.h>
 #include<stdlib.h>
+
+volatile uint8_t scroll_time = 100;
 volatile uint8_t scroll = 8;
-volatile uint8_t count = 0;
+volatile uint16_t count = 0;
 volatile uint16_t  display_rows[MATRIX_ROW_COUNT] = {0};
 volatile uint8_t len;
 volatile uint8_t col_count = 7;
