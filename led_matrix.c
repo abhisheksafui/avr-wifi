@@ -3,6 +3,8 @@
 #include<avr/eeprom.h>
 #include<stdlib.h>
 
+
+volatile uint8_t blank_feed = MAX_BLANK_CHAR_FEED_COUNT;
 volatile uint8_t scroll_time = 100;
 volatile uint8_t scroll = 8;
 volatile uint16_t count = 0;

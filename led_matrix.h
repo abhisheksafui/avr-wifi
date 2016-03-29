@@ -6,6 +6,8 @@
 #define MATRIX_ROW_COUNT 8
 #define MAX_MESSAGE_LEN 40
 #define ROW_SCAN_PORT	PORTB
+#define MAX_BLANK_CHAR_FEED_COUNT  4
+extern volatile uint8_t blank_feed;
 extern volatile uint8_t scroll_time;
 //extern volatile uint8_t *character;
 extern volatile uint8_t scanned_row;

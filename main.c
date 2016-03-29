@@ -173,7 +173,20 @@ ISR (TIMER0_COMP_vect)		//Interrupt will be called every Xus
       if (col_count == 1)
 	{
 	  //When I have completed scroll of one character I should start next character
-	  i = (i + 1) % len;
+	  
+	  if(i != len)
+	  i++;
+	  else
+	  {
+	    if(blank_feed)
+	      blank_feed--;
+	    else
+	    {
+	      i=0;
+	      blank_feed = MAX_BLANK_CHAR_FEED_COUNT;
+	    }
+	  }
+	  
 
 	  col_count = 7;
 	}
@@ -452,7 +465,7 @@ process_cmds ()
 	      i = 0;
 	      scanned_row = 0;
 	      refresh_matrix_row = 0;
-	      //memset((void *)display_rows,0,MATRIX_ROW_COUNT*4);
+	      memset((void *)display_rows,0,MATRIX_ROW_COUNT*4);
  
 	      serve_static_html ((const char *) string_update,
 				 (const char *) handle, tmp, sizeof (tmp));
@@ -629,7 +642,6 @@ main ()
 #if 1
       if (refresh_matrix_row)
 	{
-	  //      flash_led(2);
 	  if (scroll < 8)	// interrupt counts interval to start scroll by setting scroll =0 at every 200ms
 	    {
 	      //display buffer is updated per row before displaying/refreshing it

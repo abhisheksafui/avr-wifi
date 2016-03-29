@@ -28,7 +28,7 @@ void shift_data(uint32_t data,uint8_t len,SHIFT_595_CB  *latch)
 	
         for(i=0;i<len;i++)
         {
-                if(CHKBIT(data,i))
+                if(data & (1UL << i))
                 {
 			*(latch->port) |= (1<<(latch->pin_d));
                 }
