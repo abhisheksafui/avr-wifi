@@ -14,7 +14,7 @@
 #include<led_matrix.h>
 #include<font.h>
 #include<string.h>
-
+#include<i2cmaster.h>
 
 #define UPDATE_SCROLL_TIME(s) ({ s = (adc_data[1]/1024.0 *100) + 5; })
 
@@ -560,6 +560,8 @@ main ()
   // Timer 1 used for BUZZER TONE generation
   timer0_init ();
   //start_timer0();
+  i2c_init();
+
   DDRB = 0xFF;
   PORTB = 0x00;
   DDRD = _BV (PD7) | _BV (PD6) | _BV (PD5);
